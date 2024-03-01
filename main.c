@@ -10,15 +10,15 @@ struct bankAccount{
     long int accountNo;
 };
 // Function to create a new bank account
-void createAccount(struct bankAccount accounts[],int *numAccounts){
-    if(*numAccounts < MAX_ACCTS){
+void createAccount(struct bankAccount accounts[],int numAccounts){
+    if(numAccounts < MAX_ACCTS){
         printf("Enter Account holder name: ");
-        scanf("%s",accounts[*numAccounts].accountHolder);
+        scanf("%s",accounts[numAccounts].accountHolder);
         printf("Enter Account number: ");
-        scanf("%ld",&accounts[*numAccounts].accountNo);;
+        scanf("%ld",&accounts[numAccounts].accountNo);;
         // Initially Bank Balance set to zero (0.00)
-        accounts[*numAccounts].balance = 0.00;
-        (*numAccounts)++;
+        accounts[numAccounts].balance = 0.00;
+        numAccounts++;
         printf("Account created successfully.\n");
     }
     else{
@@ -122,7 +122,7 @@ int main(){
         scanf("%d",&choice);
         switch(choice){
             case 1:
-                   createAccount(accounts, &numAcccounts);
+                   createAccount(accounts, numAcccounts);
                    break;
             case 2:
                    pinCreation(accounts,numAcccounts);
