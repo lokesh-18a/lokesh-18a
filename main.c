@@ -46,6 +46,53 @@ void insert(HashTable *ht, int key, struct bankAccount data){
         current->next=newEntry;
     }
 }
+void saveAccounts(HashTable *ht){
+    FILE *file = fopen("accounts.csv","r+");
+    if(file==NULL){
+        file = fopen("accounts.csv","w");
+        if(file==NULL){
+            printf("Error opening file.\n");
+            return;
+        }
+        fprintf(file,"Account Holder,Account Number,Balance,Pin,HasPin\n");
+    }
+    else{
+        fseek(file,0,SEEK_END);
+    }
+    for(int i = 0;i < MAX_ACCTS;i++){
+        HashEntry *current = ht->table[i];
+        while(current!=NULL){
+            fprintf(file,"%s,%d,%.2f,%d,%d\n",current->data.accountHolder,current->data.accountNo,current->data.balance,current->data.pin,current->data.hasPin);
+            current=current->next;
+        }
+    }
+    fclose(file);
+    printf("Account data saved to accounts.csv\n");
+}
+void loadAccounts(HashTable *ht){
+    FILE *file = fopen("accounts.csv","r");
+    if(file==NULL){
+        printf("Error opening file.\n");
+        return;
+    }
+    char line[100];
+    fgets(line,sizeof(line),file);
+    while(fgets(line, 100, file)){
+        struct bankAccount newAccount;
+        char *token = strtok(line, ",");
+        strcpy(newAccount.accountHolder, token);
+        token = strtok(NULL, ",");
+        newAccount.accountNo = atoi(token);
+        token = strtok(NULL, ",");
+        newAccount.balance = atof(token);
+        token = strtok(NULL, ",");
+        newAccount.pin = atoi(token);
+        token = strtok(NULL, ",");
+        newAccount.hasPin = atoi(token);
+        insert(ht, newAccount.accountNo, newAccount);
+    }
+    fclose(file);
+}
 struct bankAccount *search(HashTable *ht,int key){
     int index = hashFunction(key);
     HashEntry *entry = ht->table[index];
@@ -93,7 +140,7 @@ void createAccount(HashTable *ht){
     }
 }
 // Function for pin creation for deposits and withdrawals
-void pinCreation(HashTable *ht, int numAccounts){
+void pinCreation(HashTable *ht){
     int key,pin,temp,accountno;
     printf("Enter Account Number: ");
     scanf("%d",&accountno);
@@ -238,6 +285,8 @@ void check(HashTable *ht, int accountNumber){
 }
 int main(){
     HashTable *ht = createHashTable();
+    loadAccounts(ht);
+    printf("Welcome to Console Bank\n");
     int key,choice,accountNumber;
     float amount;
     bool val;
@@ -256,7 +305,7 @@ int main(){
                    createAccount(ht);
                    break;
             case 2:
-                   pinCreation(ht, numAccounts);
+                   pinCreation(ht);
                    break;
             case 3:
                    printf("Enter Account Number for deposit : ");
@@ -310,5 +359,6 @@ int main(){
         } 
     }
     while(choice!=6);
+    saveAccounts(ht);
     return 0;
 }
