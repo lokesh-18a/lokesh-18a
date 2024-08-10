@@ -4,32 +4,104 @@
 #include <math.h>
 #include <time.h>
 #include <stdbool.h>
-#define MAX_ACCTS 100
+#define MAX_ACCTS 100 // Maximum number of bank accounts
 // Structure to represent Bank Account
 struct bankAccount{
-    char accountHolder[20];
-    float balance;
-    int accountNo;
-    int pin;
-    int hasPin;
+    char accountHolder[20]; // Name of the account holder
+    float balance; // Balance in the account
+    int accountNo; // Account number
+    int pin; // PIN for transactions
+    int hasPin; // Flag to indicate if PIN is set
+    int exists; // Flag to indicate if account exists
 };
+// Hash Table Entry structure
 typedef struct HashEntry{
-    int key;
-    struct bankAccount data;
-    struct HashEntry *next;
+    int key; // Key for the entry
+    struct bankAccount data; // Data associated with the key
+    struct HashEntry *next; // Pointer to the next entry in the chain
 }HashEntry;
+// Hash Table structure
 typedef struct HashTable{
-    HashEntry **table;
+    HashEntry **table; // Array of pointers to HashEntry structures
 }HashTable;
+// Function to calculate the hash value for a key
 int hashFunction(int key){
-    return key%MAX_ACCTS;
+    return key%MAX_ACCTS; // Simple hash function
 }
+// Function to create a new hash table
 HashTable *createHashTable(){
-    HashTable *ht = (HashTable *)malloc(sizeof(HashTable));
-    ht->table = (HashEntry **)malloc(MAX_ACCTS * sizeof(HashEntry *));
+    HashTable *ht = (HashTable *)malloc(sizeof(HashTable)); // Allocate memory for the hash table
+    ht->table = (HashEntry **)malloc(MAX_ACCTS * sizeof(HashEntry *)); // Allocate memory for the table array
     for(int i=0;i<MAX_ACCTS;i++)
-        ht->table[i]=NULL;
-    return ht;
+        ht->table[i]=NULL; // Initialize each entry to NULL
+    return ht; // Return the newly created hash table
+}
+// // Function to insert a new bank account into the hash table
+void insert(HashTable *ht, int key, struct bankAccount data){
+    int index = hashFunction(key);
+    HashEntry *newEntry = (HashEntry *)malloc(sizeof(HashEntry)); // Allocate memory for the new entry
+    newEntry->key=key;
+    newEntry->data=data;
+    newEntry->next=NULL;
+    if(ht->table[index]==NULL)
+        ht->table[index]=newEntry;
+    else{
+        HashEntry *current = ht->table[index];
+        while(current->next!=NULL)
+            current=current->next;
+        current->next=newEntry;
+    }
+}
+// Function to update an existing bank account in the hash table
+bool update(HashTable *ht, int key, struct bankAccount data){
+    int index = hashFunction(key);
+    HashEntry *current = ht->table[index];
+    while(current!=NULL){
+        if(current->key==key){
+            current->data=data;
+            return true;
+        }
+        current=current->next; // Move to the next entry in the chain
+    }
+    return false; // Return false to indicate that the key was not found
+}
+// Function to save all bank accounts to a CSV file
+void saveAccounts(HashTable *ht){
+    FILE *file = fopen("accounts.csv","w"); // Open the file for writing
+    if(file==NULL){
+        printf("Error opening file.\n");
+        return;
+    }
+    fprintf(file,"Account Holder,Account Number,Balance,Pin,HasPin\n"); // Write the header row to the file
+    for(int i = 0;i < MAX_ACCTS;i++){
+        HashEntry *current = ht->table[i];
+        while(current!=NULL){
+            fprintf(file,"%s,%d,%.2f,%d,%d\n",current->data.accountHolder,current->data.accountNo,current->data.balance,current->data.pin,current->data.hasPin);
+            current=current->next;
+        }
+    }
+    fclose(file);
+    printf("Account data saved to accounts.csv\n");
+}
+// Function to load bank accounts from a CSV file into the hash table
+void loadAccounts(HashTable *ht){
+    FILE *file = fopen("accounts.csv","r");
+    if(file==NULL){
+        return;
+    }
+    char line[100]; // Buffer to store each line of the file
+    fgets(line,sizeof(line),file); // Read the header row and discard it
+    while(fgets(line, 100, file)){
+        struct bankAccount newAccount;
+        char *token = strtok(line, ",");
+        strcpy(newAccount.accountHolder, token);
+        token = strtok(NULL, ",");
+        newAccount.accountNo = atoi(token);
+        token = strtok(NULL, ",");
+        newAccount.balance = atof(token);
+        token = strtok(NULL, ",");
+        newAccount.pin = atoi(token);
+    }
 }
 void insert(HashTable *ht, int key, struct bankAccount data){
     int index = hashFunction(key);
@@ -46,19 +118,25 @@ void insert(HashTable *ht, int key, struct bankAccount data){
         current->next=newEntry;
     }
 }
-void saveAccounts(HashTable *ht){
-    FILE *file = fopen("accounts.csv","r+");
-    if(file==NULL){
-        file = fopen("accounts.csv","w");
-        if(file==NULL){
-            printf("Error opening file.\n");
-            return;
+bool update(HashTable *ht, int key, struct bankAccount data){
+    int index = hashFunction(key);
+    HashEntry *current = ht->table[index];
+    while(current!=NULL){
+        if(current->key==key){
+            current->data=data;
+            return true;
         }
-        fprintf(file,"Account Holder,Account Number,Balance,Pin,HasPin\n");
+        current=current->next;
     }
-    else{
-        fseek(file,0,SEEK_END);
+    return false;
+}
+void saveAccounts(HashTable *ht){
+    FILE *file = fopen("accounts.csv","w");
+    if(file==NULL){
+        printf("Error opening file.\n");
+        return;
     }
+    fprintf(file,"Account Holder,Account Number,Balance,Pin,HasPin\n");
     for(int i = 0;i < MAX_ACCTS;i++){
         HashEntry *current = ht->table[i];
         while(current!=NULL){
@@ -72,7 +150,6 @@ void saveAccounts(HashTable *ht){
 void loadAccounts(HashTable *ht){
     FILE *file = fopen("accounts.csv","r");
     if(file==NULL){
-        printf("Error opening file.\n");
         return;
     }
     char line[100];
@@ -89,6 +166,7 @@ void loadAccounts(HashTable *ht){
         newAccount.pin = atoi(token);
         token = strtok(NULL, ",");
         newAccount.hasPin = atoi(token);
+        newAccount.exists = 1;
         insert(ht, newAccount.accountNo, newAccount);
     }
     fclose(file);
@@ -129,6 +207,7 @@ void createAccount(HashTable *ht){
         // Initially Bank Balance set to zero (0.00)
         newAccount.balance = 0.00;
         newAccount.hasPin = 0;
+        newAccount.exists = 1;
         numAccounts++;
         insert(ht,newAccount.accountNo, newAccount);
         printf("Account created successfully.\n");
@@ -153,7 +232,7 @@ void pinCreation(HashTable *ht){
         printf("Account Not Found!\n");
         printf("Try Again!\n");
         return;
-    }   
+    }
     printf("Account Found Successfully!\n");
     printf("Are you sure to create pin?\n");
     printf("Enter 0 for No and 1 for Yes\n");
@@ -162,7 +241,7 @@ void pinCreation(HashTable *ht){
         if (account->hasPin) {
             printf("PIN already exists for this account. Exiting to Main Menu....\n");
             return;
-        }   
+        }
         printf("Enter the 4 digit password\n");
         scanf("%d",&pin);
         while(pin < 1000 || pin > 9999){
@@ -178,7 +257,7 @@ void pinCreation(HashTable *ht){
         printf("PIN created successfully!\n");
         account->pin = temp;
         account->hasPin = 1;
-    }   
+    }
 }
 
 /* Function to perform a deposit into Bank Account*/
@@ -322,7 +401,7 @@ int main(){
                             printf("Invalid Amount. Exiting to Main Menu....\n");
                    }
                    else
-                        printf("Invalid Account Number. Exiting to Main Menu....\n");                      
+                        printf("Invalid Account Number. Exiting to Main Menu....\n");
                    break;
             case 4:
                    printf("Enter Account Number for withdrawal : ");
@@ -341,7 +420,7 @@ int main(){
                    else
                         printf("Invalid Account Number. Exiting to Main Menu....\n");
                    break;
-            case 5: 
+            case 5:
                    printf("Enter Account Number to check Balance : ");
                    scanf("%d",&accountNumber);
                    val = validAccountNumber(accountNumber);
@@ -356,7 +435,7 @@ int main(){
                    break;
             default:
                     printf("Invalid choice. Please enter a valid option.\n");
-        } 
+        }
     }
     while(choice!=6);
     saveAccounts(ht);
