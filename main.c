@@ -14,6 +14,12 @@ struct bankAccount{
     int hasPin; // Flag to indicate if PIN is set
     int exists; // Flag to indicate if account exists
 };
+struct Transaction{
+    int accountNo;
+    char type[20];
+    float amount;
+    char date[11];
+};
 // Hash Table Entry structure
 typedef struct HashEntry{
     int key; // Key for the entry
@@ -67,7 +73,7 @@ bool update(HashTable *ht, int key, struct bankAccount data){
 }
 // Function to save all bank accounts to a CSV file
 void saveAccounts(HashTable *ht){
-    FILE *file = fopen("accounts.csv","w"); // Open the file for writing
+    FILE *file=fopen("accounts.csv","w");
     if(file==NULL){
         printf("Error opening file.\n");
         return;
@@ -101,7 +107,32 @@ void loadAccounts(HashTable *ht){
         newAccount.balance = atof(token);
         token = strtok(NULL, ",");
         newAccount.pin = atoi(token);
+        token = strtok(NULL, ",");
+        newAccount.hasPin = atoi(token);
+        insert(ht,newAccount.accountNo,newAccount);
     }
+    fclose(file);
+}
+void getDate(char *date){
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    sprintf(date,"%02d-%02d-%04d",tm.tm_mday,tm.tm_mon+1,tm.tm_year+1900);
+}
+char* generateFilename(int accountNo){
+    char *filename = malloc(50 * sizeof(char));
+    sprintf(filename, "account_%d_transactions.txt", accountNo);
+    return filename;
+}
+void recordTransaction(struct Transaction transaction){
+    char *filename = generateFilename(transaction.accountNo);
+    FILE *file = fopen(filename, "a");
+    if (file == NULL) {
+        printf("Error opening file.\n");
+        return;
+    }
+    fprintf(file, "Date: %s | Type: %s | Amount: %.2f\n", transaction.date,transaction.type,transaction.amount);
+    fclose(file);
+    free(filename);
 }
 struct bankAccount *search(HashTable *ht,int key){
     int index = hashFunction(key);
@@ -212,6 +243,12 @@ void deposit(HashTable *ht, int accountNumber,float amount){
             correctPin = 1;
             account->balance += amount;
             printf("Deposit Successful. New Balance = %.2f\n",account->balance);
+            struct Transaction transaction;
+            transaction.accountNo=accountNumber;
+            strcpy(transaction.type,"Deposit");
+            transaction.amount=amount;
+            getDate(transaction.date);
+            recordTransaction(transaction);
         }
         else{
             pinAttempts++;
@@ -242,6 +279,12 @@ void withdrawal(HashTable *ht, int accountNumber,float amount){
                 if(amount <= account->balance){
                     account->balance -= amount;
                     printf("Withdrawal Successful. New Balance = %.2f\n",account->balance);
+                    struct Transaction transaction;
+                    transaction.accountNo=accountNumber;
+                    strcpy(transaction.type,"Withdrawal");
+                    transaction.amount=amount;
+                    getDate(transaction.date);
+                    recordTransaction(transaction);
                 }
                 else
                     printf("Insufficient Funds Poor Peasant \U0001F612\n");
