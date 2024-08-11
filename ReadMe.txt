@@ -6,6 +6,6 @@ Coding: I love working on projects that challenge my programming skills.
 Gaming: I’m a fan of action games and enjoy playing strategy games.
 Favorites :
 Tech Langs: Python, C++
-Projects
+Projects :
 Here are some of the projects I'm working on or have completed:
-Project 1: 
+Project 1: https://github.com/lokesh-18a/BankApp
