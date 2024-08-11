@@ -1,15 +1,11 @@
-This is Console Based Bank Application.
-my deadline to complete this is August 31 2024
----------------------------------------------------------------------
-Features to added :
-Pin for every action done(deposit,withdrawal,check balance)
-Sending money to accounts which already exists.
----------------------------------------------------------------------
-New Update - 11 August 2024
-Uses Hash Table for fast access and operations
-Pin introduced for every operation.
-A temporary database in introduced for storing accounts info,
-Added a feature "Record Transaction" which saves transaction date, type and amount into a text file.
-Features to added :
-Sending money to accounts which already exists.
---------------------------------------------------------------------
+Welcome to My GitHub!
+About Me
+Hi there! I'm Kemidi Lokesh, a Student specializing in Data Science. I’m currently pursuing degrees in data science and am excited about learning new technologies and solving complex problems.
+My Hobbies : 
+Coding: I love working on projects that challenge my programming skills.
+Gaming: I’m a fan of action games and enjoy playing strategy games.
+Favorites :
+Tech Langs: Python, C++
+Projects
+Here are some of the projects I'm working on or have completed:
+Project 1: 
