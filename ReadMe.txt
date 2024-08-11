@@ -9,3 +9,4 @@ Tech Langs: Python, C++
 Projects :
 Here are some of the projects I'm working on or have completed:
 Project 1: https://github.com/lokesh-18a/BankApp
+Contact me : kemidilokesh@gmail.com
